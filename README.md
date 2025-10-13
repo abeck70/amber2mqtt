@@ -1,6 +1,26 @@
-# Docker Container for Amber2MQTT
+<h1 align="center">
+  <br>
+  <i>Amber2MQTT Docker Container</i>
+  <br>
+  <h3 align="center">
+    <i>Standalone Docker Container to Poll Amber for pricing updates then use MQTT to forward updates to your preferred workflow Engine</i>
+    <br>
+  </h3>
+</h1>
 
-# Beta Testing atm
+<p align="center">
+  <a><href="https://github.com/cabberley/amber2mqtt/releases"><img src="https://img.shields.io/github/v/release/cabberley/amber2mqtt?display_name=tag&include_prereleases&sort=semver" alt="Current version"></a> <img alt="GitHub Release Date" src="https://img.shields.io/github/release-date/cabberley/amber2mqtt">
+  <img alt="GitHub" src="https://img.shields.io/github/license/cabberley/amber2mqtt"> <img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/cabberley/amber2mqtt/multi-publish.yml">
+  <img alt="GitHub Issues or Pull Requests" src="https://img.shields.io/github/issues/cabberley/amber2mqtt"> <img alt="GitHub User's stars" src="https://img.shields.io/github/stars/cabberley"> <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/cabberley/amber2mqtt/total">
+
+
+</p>
+<p align="center">
+    <a href="https://github.com/hacs/integration"><img src="https://img.shields.io/badge/HACS-Custom-41BDF5.svg"></a>
+</p>
+<p align="center">
+  <a href="https://www.buymeacoffee.com/cabberley" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+</p>
 
 This Container will based on the timing schedules you setup:
 1. Poll the Amber API using your account details
@@ -50,4 +70,3 @@ Amber limits you currently to 50 requests per 5 minutes and if you exceed that y
 The AEMO minutes and seconds work the same way.
 
 You can adjust these according to your needs, but in doing so consider the timing of when these prices are published and that they are not available immediately at the start of the 5min intervals!
-
