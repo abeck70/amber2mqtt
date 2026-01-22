@@ -4,16 +4,13 @@ import amberelectric
 import amberelectric.models
 import amberelectric.api_client
 from amberelectric.rest import ApiException
+import time
 import utils as ut
 from datetime import timezone, timedelta
 
 
 def getAmberData(accessToken, site_id, nextrecords, previous, resolution):
     """Get the current prices from the Amber API"""
-    configuration = amberelectric.Configuration(
-    host = "https://api.amber.com.au/v1"
-    )
-    # Configure Bearer authorization: apiKey
     configuration = amberelectric.Configuration(
         access_token = accessToken
     )
@@ -22,16 +19,26 @@ def getAmberData(accessToken, site_id, nextrecords, previous, resolution):
         # Create an instance of the API class
         apiInstance = amberelectric.AmberApi(apiClient)
 
-        try:
-            if resolution == 0:
-                data = apiInstance.get_current_prices(site_id, next=nextrecords, previous=previous)
-            else:
-                data = apiInstance.get_current_prices(site_id, next=nextrecords, previous=previous, resolution=resolution)
-            intervals = [interval.actual_instance for interval in data]
-            print("The response of AmberApi->get_current_prices:\n")
-            apiInstance.api_client.close()
-        except ApiException as e:
-            print("Exception when calling AmberApi->get_current_prices: %s\n" % e)
+        max_retries = 3
+        retry_delay = 5
+        for attempt in range(max_retries):
+            try:
+                if resolution == 0:
+                    data = apiInstance.get_current_prices(site_id, next=nextrecords, previous=previous)
+                else:
+                    data = apiInstance.get_current_prices(site_id, next=nextrecords, previous=previous, resolution=resolution)
+                intervals = [interval.actual_instance for interval in data]
+                print("The response of AmberApi->get_current_prices: Success\n")
+                break
+            except ApiException as e:
+                if attempt < max_retries - 1:
+                    print(f"Exception when calling AmberApi->get_current_prices (attempt {attempt + 1}): {e}. Retrying in {retry_delay}s...")
+                    time.sleep(retry_delay)
+                else:
+                    print(f"Final exception when calling AmberApi->get_current_prices: {e}\n")
+                    raise e
+            finally:
+                apiInstance.api_client.close()
 
         result: dict[str, dict[str, Any]] = {
                 "current": {},
