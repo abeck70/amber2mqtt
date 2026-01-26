@@ -4,92 +4,103 @@ import amberelectric
 import amberelectric.models
 import amberelectric.api_client
 from amberelectric.rest import ApiException
+import time
 import utils as ut
 from datetime import timezone, timedelta
+
+AMBER_MAX_RETRIES = 3
+AMBER_RETRY_DELAY = 5
 
 
 def getAmberData(accessToken, site_id, nextrecords, previous, resolution):
     """Get the current prices from the Amber API"""
     configuration = amberelectric.Configuration(
-    host = "https://api.amber.com.au/v1"
-    )
-    # Configure Bearer authorization: apiKey
-    configuration = amberelectric.Configuration(
         access_token = accessToken
     )
-    # Enter a context with an instance of the API client
-    with amberelectric.ApiClient(configuration) as apiClient:
-        # Create an instance of the API class
-        apiInstance = amberelectric.AmberApi(apiClient)
-
+    
+    intervals = None
+    for attempt in range(AMBER_MAX_RETRIES):
+        # Enter a context with an instance of the API client on each attempt
+        # to ensure the client is fresh and properly closed.
         try:
-            if resolution == 0:
-                data = apiInstance.get_current_prices(site_id, next=nextrecords, previous=previous)
-            else:
-                data = apiInstance.get_current_prices(site_id, next=nextrecords, previous=previous, resolution=resolution)
-            intervals = [interval.actual_instance for interval in data]
-            print("The response of AmberApi->get_current_prices:\n")
-            apiInstance.api_client.close()
+            with amberelectric.ApiClient(configuration) as apiClient:
+                apiInstance = amberelectric.AmberApi(apiClient)
+                if resolution == 0:
+                    data = apiInstance.get_current_prices(site_id, next=nextrecords, previous=previous)
+                else:
+                    data = apiInstance.get_current_prices(site_id, next=nextrecords, previous=previous, resolution=resolution)
+                intervals = [interval.actual_instance for interval in data]
+                print("The response of AmberApi->get_current_prices: Success\n")
+                # Break on success
+                break
         except ApiException as e:
-            print("Exception when calling AmberApi->get_current_prices: %s\n" % e)
+            if attempt < AMBER_MAX_RETRIES - 1:
+                print(f"Exception when calling AmberApi->get_current_prices (attempt {attempt + 1}): {e}. Retrying in {AMBER_RETRY_DELAY}s...")
+                time.sleep(AMBER_RETRY_DELAY)
+            else:
+                print(f"Final exception when calling AmberApi->get_current_prices: {e}\n")
+                raise e
 
-        result: dict[str, dict[str, Any]] = {
-                "current": {},
-                "descriptors": {},
-                "forecasts": {},
-                "actuals": {},
-                "grid": {},
-            }
+    if intervals is None:
+        raise RuntimeError("Failed to fetch Amber intervals after retries")
 
-        current = [interval for interval in intervals if ut.is_current(interval)]
-        actuals = [interval for interval in intervals if ut.is_actual(interval)]
-        if resolution == 5:
-            forecasts = [interval for interval in intervals if ut.is_forecast(interval) and interval.duration == 5]
-            general = [interval for interval in current if ut.is_general(interval) and interval.duration == 5]
-            feedIn = [interval for interval in current if ut.is_feed_in(interval) and interval.duration == 5]
-        else:
-            forecasts = [interval for interval in intervals if ut.is_forecast(interval)]
-            general = [interval for interval in current if ut.is_general(interval)]
-            feedIn = [interval for interval in current if ut.is_feed_in(interval)]
+    result: dict[str, dict[str, Any]] = {
+            "current": {},
+            "descriptors": {},
+            "forecasts": {},
+            "actuals": {},
+            "grid": {},
+        }
 
-        result["current"]["general"] = general[0]
-        result["descriptors"]["general"] = ut.normalize_descriptor(general[0].descriptor)
-        result["forecasts"]["general"] = [
-            interval for interval in forecasts if ut.is_general(interval)
-        ]
-        result["actuals"]["general"] = [
-            interval for interval in actuals if ut.is_general(interval)
-        ]
-        result["grid"]["renewables"] = round(general[0].renewables)
-        result["grid"]["price_spike"] = general[0].spike_status.value
-        tariffInformation = general[0].tariff_information
-        if tariffInformation:
-            result["grid"]["demand_window"] = tariffInformation.demand_window
-
-        controlledLoad = [
-            interval for interval in current if ut.is_controlled_load(interval)
-        ]
-        if controlledLoad:
-            result["current"]["controlled_load"] = controlledLoad[0]
-            result["descriptors"]["controlled_load"] = ut.normalize_descriptor(
-                controlledLoad[0].descriptor
-            )
-            result["forecasts"]["controlled_load"] = [
-                interval for interval in forecasts if ut.is_controlled_load(interval)
-            ]
-
+    current = [interval for interval in intervals if ut.is_current(interval)]
+    actuals = [interval for interval in intervals if ut.is_actual(interval)]
+    if resolution == 5:
+        forecasts = [interval for interval in intervals if ut.is_forecast(interval) and interval.duration == 5]
+        general = [interval for interval in current if ut.is_general(interval) and interval.duration == 5]
+        feedIn = [interval for interval in current if ut.is_feed_in(interval) and interval.duration == 5]
+    else:
+        forecasts = [interval for interval in intervals if ut.is_forecast(interval)]
+        general = [interval for interval in current if ut.is_general(interval)]
         feedIn = [interval for interval in current if ut.is_feed_in(interval)]
-        if feedIn:
-            result["current"]["feed_in"] = feedIn[0]
-            result["descriptors"]["feed_in"] = ut.normalize_descriptor(
-                feedIn[0].descriptor
-            )
-            result["forecasts"]["feed_in"] = [
-                interval for interval in forecasts if ut.is_feed_in(interval)
-            ]
-            result["actuals"]["feed_in"] = [
-                interval for interval in actuals if ut.is_feed_in(interval)
-            ]
+
+    result["current"]["general"] = general[0]
+    result["descriptors"]["general"] = ut.normalize_descriptor(general[0].descriptor)
+    result["forecasts"]["general"] = [
+        interval for interval in forecasts if ut.is_general(interval)
+    ]
+    result["actuals"]["general"] = [
+        interval for interval in actuals if ut.is_general(interval)
+    ]
+    result["grid"]["renewables"] = round(general[0].renewables)
+    result["grid"]["price_spike"] = general[0].spike_status.value
+    tariffInformation = general[0].tariff_information
+    if tariffInformation:
+        result["grid"]["demand_window"] = tariffInformation.demand_window
+
+    controlledLoad = [
+        interval for interval in current if ut.is_controlled_load(interval)
+    ]
+    if controlledLoad:
+        result["current"]["controlled_load"] = controlledLoad[0]
+        result["descriptors"]["controlled_load"] = ut.normalize_descriptor(
+            controlledLoad[0].descriptor
+        )
+        result["forecasts"]["controlled_load"] = [
+            interval for interval in forecasts if ut.is_controlled_load(interval)
+        ]
+
+    feedIn = [interval for interval in current if ut.is_feed_in(interval)]
+    if feedIn:
+        result["current"]["feed_in"] = feedIn[0]
+        result["descriptors"]["feed_in"] = ut.normalize_descriptor(
+            feedIn[0].descriptor
+        )
+        result["forecasts"]["feed_in"] = [
+            interval for interval in forecasts if ut.is_feed_in(interval)
+        ]
+        result["actuals"]["feed_in"] = [
+            interval for interval in actuals if ut.is_feed_in(interval)
+        ]
 
     return result
 
