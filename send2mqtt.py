@@ -5,10 +5,11 @@ import os
 from paho.mqtt import client as mqtt_client
 import mqttmessages as mm
 from const import (
+    AMBER_DEVICE_ID,
+    AMBER_FORECAST_DEVICE_ID,
+    AEMO_DEVICE_ID,
     AMBER_DISCOVERY_TOPIC,
     AMBER_FORECAST_DISCOVERY_TOPIC,
-    AMBER_FORECAST_DEVICE,
-    AMBER_FORECAST_OBJECT,
     AEMO_DISCOVERY_TOPIC,
     AMBER_STATE_TOPIC_CURRENT,
     AMBER_STATE_TOPIC_PERIODS,
@@ -116,48 +117,76 @@ def mqttConnectBroker():
 
 
 def PublishDiscoveryAmberEntities(client):
-    """Publish the Amber Entities to Home Assistant"""
-    #topic = HOME_ASSISTANT_DISCOVERY_TOPIC
-    # for sensor in SENSOR_LIST:
-    discoveryMsg = mm.amberDiscoveryMessage()  # sensor)
-    result = client.publish(AMBER_DISCOVERY_TOPIC, json.dumps(discoveryMsg), qos=0, retain=True)
-    status = result[0]
-    if status != 0:
-        print(f"Failed to send message to topic {AMBER_DISCOVERY_TOPIC}")
-
-def PublishDiscoveryAmberForecastEntities(client,forecast5,forecast30,forecastUser,forecast288):
-    """Publish all enabled Amber Forecast entities in a single discovery message"""
-    cmps = {}
-    if forecast5:
-        cmps.update(mm.amberForecast5minDiscoveryMessage()["cmps"])
-    if forecast30:
-        cmps.update(mm.amberForecast30minDiscoveryMessage()["cmps"])
-    if forecastUser:
-        cmps.update(mm.amberForecastUserDiscoveryMessage()["cmps"])
-    if forecast288:
-        cmps.update(mm.amberForecast288DiscoveryMessage()["cmps"])
-    if cmps:
-        discoveryMsg = {
-            "device": AMBER_FORECAST_DEVICE,
-            "o": AMBER_FORECAST_OBJECT,
-            "cmps": cmps,
-        }
-        result = client.publish(
-            AMBER_FORECAST_DISCOVERY_TOPIC,
-            json.dumps(discoveryMsg), qos=0, retain=True)
+    """Publish the Amber Entities to Home Assistant using standard discovery format"""
+    # Clear old discovery message format (if it exists)
+    try:
+        client.publish(AMBER_DISCOVERY_TOPIC, "", qos=0, retain=True)
+    except:
+        pass
+    
+    entities = mm.amberDiscoveryMessage()
+    for entity in entities:
+        # Standard Home Assistant discovery topic: homeassistant/sensor/<node_id>/<object_id>/config
+        # Use object_id from entity if available, otherwise use unique_id
+        object_id = entity.get('object_id', entity['unique_id'].replace(f"{AMBER_DEVICE_ID}_", ""))
+        topic = f"homeassistant/sensor/{AMBER_DEVICE_ID}/{object_id}/config"
+        # Remove object_id from payload (it's only for topic construction)
+        payload = {k: v for k, v in entity.items() if k != 'object_id'}
+        result = client.publish(topic, json.dumps(payload), qos=0, retain=True)
         status = result[0]
         if status != 0:
-            print(f"Failed to send message to topic {AMBER_FORECAST_DISCOVERY_TOPIC}")
+            print(f"Failed to send message to topic {topic}")
+
+def PublishDiscoveryAmberForecastEntities(client,forecast5,forecast30,forecastUser,forecast288):
+    """Publish all enabled Amber Forecast entities using standard discovery format"""
+    # Clear old discovery message format (if it exists)
+    try:
+        client.publish(AMBER_FORECAST_DISCOVERY_TOPIC, "", qos=0, retain=True)
+    except:
+        pass
+    
+    entities = []
+    if forecast5:
+        entities.extend(mm.amberForecast5minDiscoveryMessage())
+    if forecast30:
+        entities.extend(mm.amberForecast30minDiscoveryMessage())
+    if forecastUser:
+        entities.extend(mm.amberForecastUserDiscoveryMessage())
+    if forecast288:
+        entities.extend(mm.amberForecast288DiscoveryMessage())
+    
+    for entity in entities:
+        # Standard Home Assistant discovery topic: homeassistant/sensor/<node_id>/<object_id>/config
+        # Use object_id from entity if available, otherwise use unique_id
+        object_id = entity.get('object_id', entity['unique_id'].replace(f"{AMBER_FORECAST_DEVICE_ID}_", ""))
+        topic = f"homeassistant/sensor/{AMBER_FORECAST_DEVICE_ID}/{object_id}/config"
+        # Remove object_id from payload (it's only for topic construction)
+        payload = {k: v for k, v in entity.items() if k != 'object_id'}
+        result = client.publish(topic, json.dumps(payload), qos=0, retain=True)
+        status = result[0]
+        if status != 0:
+            print(f"Failed to send message to topic {topic}")
 
 def PublishDiscoveryAemoEntities(client):
-    """Publish the AEMO Entities to Home Assistant"""
-    #topic = HOME_ASSISTANT_DISCOVERY_TOPIC
-    # for sensor in SENSOR_LIST:
-    discoveryMsg = mm.aemoDiscoveryMessage()  # sensor)
-    result = client.publish(AEMO_DISCOVERY_TOPIC, json.dumps(discoveryMsg), qos=0, retain=True)
-    status = result[0]
-    if status != 0:
-        print(f"Failed to send message to topic {AEMO_DISCOVERY_TOPIC}")
+    """Publish the AEMO Entities to Home Assistant using standard discovery format"""
+    # Clear old discovery message format (if it exists)
+    try:
+        client.publish(AEMO_DISCOVERY_TOPIC, "", qos=0, retain=True)
+    except:
+        pass
+    
+    entities = mm.aemoDiscoveryMessage()
+    for entity in entities:
+        # Standard Home Assistant discovery topic: homeassistant/sensor/<node_id>/<object_id>/config
+        # Use object_id from entity if available, otherwise use unique_id
+        object_id = entity.get('object_id', entity['unique_id'].replace(f"{AEMO_DEVICE_ID}_", ""))
+        topic = f"homeassistant/sensor/{AEMO_DEVICE_ID}/{object_id}/config"
+        # Remove object_id from payload (it's only for topic construction)
+        payload = {k: v for k, v in entity.items() if k != 'object_id'}
+        result = client.publish(topic, json.dumps(payload), qos=0, retain=True)
+        status = result[0]
+        if status != 0:
+            print(f"Failed to send message to topic {topic}")
 
 
 def publishAmberStateCurrent(client, amberdata):

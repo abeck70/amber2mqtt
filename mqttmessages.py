@@ -55,238 +55,186 @@ from const import (
 LOCAL_TIME_ZONE = get_localzone()
 
 def amberDiscoveryMessage():
-    """Create the Amber discovery message"""
-    cmps = {}
+    """Create the Amber discovery messages - returns list of individual entity discovery messages"""
+    entities = []
     for sensor in SENSOR_LIST:
         if "Period" in sensor:
             state_topic = AMBER_STATE_TOPIC_PERIODS
         else:
             state_topic = AMBER_STATE_TOPIC_CURRENT
+        entity_id = sensor.lower().replace(" ", "_")
+        unique_id = f"amber2mqtt_{entity_id}"
         sensorDict = {
             "name": sensor,
-            "unique_id": sensor.lower().replace(" ", "_"),
-            "def_ent_id": sensor.lower().replace(" ", "_"),
+            "unique_id": unique_id,
             "state_topic": state_topic,
             "json_attributes_topic": (
-                f"{AMBER_MQTT_PREFIX}/{sensor.lower().replace(' ', '_')}/attributes"
+                f"{AMBER_MQTT_PREFIX}/{entity_id}/attributes"
             ),
             "device_class": "monetary",
             "unit_of_measurement": "$/kWh",
-            "p": "sensor",
-            "value_template": "{{ value_json."
-            + sensor.lower().replace(" ", "_")
-            + " }}",
+            "value_template": "{{ value_json." + entity_id + " }}",
+            "device": AMBER_DEVICE,
+            "object_id": entity_id,  # For topic path
         }
-        cmps[sensor] = sensorDict
-    sensor = AMBER_5MIN_CURRENT_SPIKE_ENTITY
-    sensorDict = {
-        "name": sensor,
-        "unique_id": sensor.lower().replace(" ", "_"),
-        "def_ent_id": sensor.lower().replace(" ", "_"),
-        "state_topic": AMBER_STATE_TOPIC_CURRENT,
-        "p": "sensor",
-        "value_template": "{{ value_json." + sensor.lower().replace(" ", "_") + " }}",
-    }
-    cmps[sensor] = sensorDict
-    sensor = AMBER_5MIN_CURRENT_PERIOD_TIME_ENTITY
-    sensorDict = {
-        "name": sensor,
-        "unique_id": sensor.lower().replace(" ", "_"),
-        "def_ent_id": sensor.lower().replace(" ", "_"),
-        "state_topic": AMBER_STATE_TOPIC_CURRENT,
-        "p": "sensor",
-        "value_template": "{{ value_json." + sensor.lower().replace(" ", "_") + " }}",
-    }
-    cmps[sensor] = sensorDict
-    sensor = AMBER_5MIN_CURRENT_FEED_IN_DESCRIPTOR_ENTITY
-    sensorDict = {
-        "name": sensor,
-        "unique_id": sensor.lower().replace(" ", "_"),
-        "def_ent_id": sensor.lower().replace(" ", "_"),
-        "state_topic": AMBER_STATE_TOPIC_CURRENT,
-        "p": "sensor",
-        "value_template": "{{ value_json." + sensor.lower().replace(" ", "_") + " }}",
-    }
-    cmps[sensor] = sensorDict
-    sensor = AMBER_5MIN_CURRENT_GENERAL_DESCRIPTOR_ENTITY
-    sensorDict = {
-        "name": sensor,
-        "unique_id": sensor.lower().replace(" ", "_"),
-        "def_ent_id": sensor.lower().replace(" ", "_"),
-        "state_topic": AMBER_STATE_TOPIC_CURRENT,
-        "p": "sensor",
-        "value_template": "{{ value_json." + sensor.lower().replace(" ", "_") + " }}",
-    }
-    cmps[sensor] = sensorDict
-    sensor = AMBER_5MIN_LAST_UPDATE
-    sensorDict = {
-        "name": sensor,
-        "unique_id": sensor.lower().replace(" ", "_"),
-        "def_ent_id": sensor.lower().replace(" ", "_"),
-        "state_topic": AMBER_STATE_TOPIC_CURRENT,
-        "p": "sensor",
-        "value_template": "{{ value_json." + sensor.lower().replace(" ", "_") + " }}",
-    }
-    cmps[sensor] = sensorDict
-    discoveryMsg = {
-        "device": AMBER_DEVICE,
-        "o": AMBER_OBJECT,
-        "cmps": cmps,
-    }
-    return discoveryMsg
+        entities.append(sensorDict)
+    
+    # Add additional sensors
+    additional_sensors = [
+        AMBER_5MIN_CURRENT_SPIKE_ENTITY,
+        AMBER_5MIN_CURRENT_PERIOD_TIME_ENTITY,
+        AMBER_5MIN_CURRENT_FEED_IN_DESCRIPTOR_ENTITY,
+        AMBER_5MIN_CURRENT_GENERAL_DESCRIPTOR_ENTITY,
+        AMBER_5MIN_LAST_UPDATE,
+    ]
+    
+    for sensor in additional_sensors:
+        entity_id = sensor.lower().replace(" ", "_")
+        unique_id = f"amber2mqtt_{entity_id}"
+        sensorDict = {
+            "name": sensor,
+            "unique_id": unique_id,
+            "state_topic": AMBER_STATE_TOPIC_CURRENT,
+            "value_template": "{{ value_json." + entity_id + " }}",
+            "device": AMBER_DEVICE,
+            "object_id": entity_id,  # For topic path
+        }
+        entities.append(sensorDict)
+    
+    return entities
 
 def amberForecast5minDiscoveryMessage():
-    """Create the Amber discovery message for the 5 minute forecast"""
-    cmps = {}
+    """Create the Amber discovery messages for the 5 minute forecast - returns list of individual entity discovery messages"""
+    entities = []
     for sensor in SENSOR_FORECAST_5MIN_LIST:
         state_topic = AMBER_STATE_TOPIC_5MIN_FORECASTS
+        entity_id = sensor.lower().replace(" ", "_")
+        unique_id = f"amberforecast2mqtt_{entity_id}"
         sensorDict = {
             "name": sensor,
-            "unique_id": sensor.lower().replace(" ", "_"),
-            "def_ent_id": sensor.lower().replace(" ", "_"),
+            "unique_id": unique_id,
             "state_topic": state_topic,
             "json_attributes_topic": (
-                f"{AMBER_MQTT_PREFIX}/{sensor.lower().replace(' ', '_')}/attributes"
+                f"{AMBER_MQTT_PREFIX}/{entity_id}/attributes"
             ),
             "device_class": "monetary",
             "unit_of_measurement": "$/kWh",
-            "p": "sensor",
-            "value_template": "{{ value_json."
-            + sensor.lower().replace(" ", "_")
-            + " }}",
+            "value_template": "{{ value_json." + entity_id + " }}",
+            "device": AMBER_FORECAST_DEVICE,
+            "object_id": entity_id,  # For topic path
         }
-        cmps[sensor] = sensorDict
-    discoveryMsg = {
-        "device": AMBER_FORECAST_DEVICE,
-        "o": AMBER_FORECAST_OBJECT,
-        "cmps": cmps,
-    }
-    return discoveryMsg
+        entities.append(sensorDict)
+    return entities
 
 def amberForecast288DiscoveryMessage():
-    """Create the Amber discovery message for the 5 minute forecast"""
-    cmps = {}
+    """Create the Amber discovery messages for the 5 minute extended forecast - returns list of individual entity discovery messages"""
+    entities = []
     for sensor in SENSOR_FORECAST_5MIN_EXTENDED_LIST:
         state_topic = AMBER_STATE_TOPIC_5MIN_EXTENDED_FORECASTS
+        entity_id = sensor.lower().replace(" ", "_")
+        unique_id = f"amberforecast2mqtt_{entity_id}"
         sensorDict = {
             "name": sensor,
-            "unique_id": sensor.lower().replace(" ", "_"),
-            "def_ent_id": sensor.lower().replace(" ", "_"),
+            "unique_id": unique_id,
             "state_topic": state_topic,
             "json_attributes_topic": (
-                f"{AMBER_MQTT_PREFIX}/{sensor.lower().replace(' ', '_')}/attributes"
+                f"{AMBER_MQTT_PREFIX}/{entity_id}/attributes"
             ),
             "device_class": "monetary",
             "unit_of_measurement": "$/kWh",
-            "p": "sensor",
-            "value_template": "{{ value_json."
-            + sensor.lower().replace(" ", "_")
-            + " }}",
+            "value_template": "{{ value_json." + entity_id + " }}",
+            "device": AMBER_FORECAST_DEVICE,
+            "object_id": entity_id,  # For topic path
         }
-        cmps[sensor] = sensorDict
-    discoveryMsg = {
-        "device": AMBER_FORECAST_DEVICE,
-        "o": AMBER_FORECAST_OBJECT,
-        "cmps": cmps,
-    }
-    return discoveryMsg
+        entities.append(sensorDict)
+    return entities
 
 def amberForecastUserDiscoveryMessage():
-    """Create the Amber discovery message for the user forecast"""
-    cmps = {}
+    """Create the Amber discovery messages for the user forecast - returns list of individual entity discovery messages"""
+    entities = []
     for sensor in SENSOR_FORECAST_USER_LIST:
         state_topic = AMBER_STATE_TOPIC_USER_FORECASTS
+        entity_id = sensor.lower().replace(" ", "_")
+        unique_id = f"amberforecast2mqtt_{entity_id}"
         sensorDict = {
             "name": sensor,
-            "unique_id": sensor.lower().replace(" ", "_"),
-            "def_ent_id": sensor.lower().replace(" ", "_"),
+            "unique_id": unique_id,
             "state_topic": state_topic,
             "json_attributes_topic": (
-                f"{AMBER_MQTT_PREFIX}/{sensor.lower().replace(' ', '_')}/attributes"
+                f"{AMBER_MQTT_PREFIX}/{entity_id}/attributes"
             ),
             "device_class": "monetary",
             "unit_of_measurement": "$/kWh",
-            "p": "sensor",
-            "value_template": "{{ value_json."
-            + sensor.lower().replace(" ", "_")
-            + " }}",
+            "value_template": "{{ value_json." + entity_id + " }}",
+            "device": AMBER_FORECAST_DEVICE,
+            "object_id": entity_id,  # For topic path
         }
-        cmps[sensor] = sensorDict
-    discoveryMsg = {
-        "device": AMBER_FORECAST_DEVICE,
-        "o": AMBER_FORECAST_OBJECT,
-        "cmps": cmps,
-    }
-    return discoveryMsg
+        entities.append(sensorDict)
+    return entities
 
 def amberForecast30minDiscoveryMessage():
-    """Create the Amber discovery message for the 30 minute forecast"""
-    cmps = {}
+    """Create the Amber discovery messages for the 30 minute forecast - returns list of individual entity discovery messages"""
+    entities = []
     for sensor in SENSOR_FORECAST_30MIN_LIST:
         state_topic = AMBER_STATE_TOPIC_30MIN_FORECASTS
+        entity_id = sensor.lower().replace(" ", "_")
+        unique_id = f"amberforecast2mqtt_{entity_id}"
         sensorDict = {
             "name": sensor,
-            "unique_id": sensor.lower().replace(" ", "_"),
-            "def_ent_id": sensor.lower().replace(" ", "_"),
+            "unique_id": unique_id,
             "state_topic": state_topic,
             "json_attributes_topic": (
-                f"{AMBER_MQTT_PREFIX}/{sensor.lower().replace(' ', '_')}/attributes"
+                f"{AMBER_MQTT_PREFIX}/{entity_id}/attributes"
             ),
             "device_class": "monetary",
             "unit_of_measurement": "$/kWh",
-            "p": "sensor",
-            "value_template": "{{ value_json."
-            + sensor.lower().replace(" ", "_")
-            + " }}",
+            "value_template": "{{ value_json." + entity_id + " }}",
+            "device": AMBER_FORECAST_DEVICE,
+            "object_id": entity_id,  # For topic path
         }
-        cmps[sensor] = sensorDict
-    discoveryMsg = {
-        "device": AMBER_FORECAST_DEVICE,
-        "o": AMBER_FORECAST_OBJECT,
-        "cmps": cmps,
-    }
-    return discoveryMsg
+        entities.append(sensorDict)
+    return entities
 
 def aemoDiscoveryMessage():
-    """Create the AEMO discovery message"""
-    cmps = {}
+    """Create the AEMO discovery messages - returns list of individual entity discovery messages"""
+    entities = []
     for sensor in SENSOR_LIST_AEMO_CURRENT:
         if "Period" in sensor:
             state_topic = AEMO_STATE_TOPIC_PERIODS
         else:
             state_topic = AEMO_STATE_TOPIC_CURRENT
+        entity_id = sensor.lower().replace(" ", "_")
+        unique_id = f"aemo2mqtt_{entity_id}"
         sensorDict = {
             "name": sensor,
-            "unique_id": sensor.lower().replace(" ", "_"),
-            "def_ent_id": sensor.lower().replace(" ", "_"),
+            "unique_id": unique_id,
             "state_topic": state_topic,
             "json_attributes_topic": (
-                f"{AMBER_MQTT_PREFIX}/{sensor.lower().replace(' ', '_')}/attributes"
+                f"{AMBER_MQTT_PREFIX}/{entity_id}/attributes"
             ),
             "device_class": "monetary",
             "unit_of_measurement": "$/kWh",
-            "p": "sensor",
-            "value_template": "{{ value_json."
-            + sensor.lower().replace(" ", "_")
-            + " }}",
+            "value_template": "{{ value_json." + entity_id + " }}",
+            "device": AEMO_DEVICE,
+            "object_id": entity_id,  # For topic path
         }
-        cmps[sensor] = sensorDict
+        entities.append(sensorDict)
+    
+    # Add last update sensor
     sensor = AEMO_5MIN_LAST_UPDATE
+    entity_id = sensor.lower().replace(" ", "_")
+    unique_id = f"aemo2mqtt_{entity_id}"
     sensorDict = {
         "name": sensor,
-        "unique_id": sensor.lower().replace(" ", "_"),
-        "def_ent_id": sensor.lower().replace(" ", "_"),
+        "unique_id": unique_id,
         "state_topic": AEMO_STATE_TOPIC_CURRENT,
-        "p": "sensor",
-        "value_template": "{{ value_json." + sensor.lower().replace(" ", "_") + " }}",
-    }
-    cmps[sensor] = sensorDict
-    discoveryMsg = {
+        "value_template": "{{ value_json." + entity_id + " }}",
         "device": AEMO_DEVICE,
-        "o": AEMO_OBJECT,
-        "cmps": cmps,
+        "object_id": entity_id,  # For topic path
     }
-    return discoveryMsg
+    entities.append(sensorDict)
+    
+    return entities
 
 
 def amberStateMessage(amberdata):
