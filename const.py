@@ -121,7 +121,7 @@ while x <= 12:
     x+=1
 
 AMBER_DEVICE = {
-        "identifiers": AMBER_DEVICE_ID,
+        "identifiers": [AMBER_DEVICE_ID],
         "name": AMBER_DEVICE_NAME,
         "model": AMBER_DEVICE_MODEL,
         "manufacturer": DEVICE_MANUFACTURER,
@@ -135,7 +135,7 @@ AMBER_OBJECT = {
   }
 
 AMBER_FORECAST_DEVICE = {
-        "identifiers": AMBER_FORECAST_DEVICE_ID,
+        "identifiers": [AMBER_FORECAST_DEVICE_ID],
         "name": AMBER_FORECAST_DEVICE_NAME,
         "model": AMBER_FORECAST_DEVICE_MODEL,
         "manufacturer": DEVICE_MANUFACTURER,
@@ -149,7 +149,7 @@ AMBER_FORECAST_OBJECT = {
   }
 
 AEMO_DEVICE = {
-        "identifiers": AEMO_DEVICE_ID,
+        "identifiers": [AEMO_DEVICE_ID],
         "name": AEMO_DEVICE_NAME,
         "model": AEMO_DEVICE_MODEL,
         "manufacturer": DEVICE_MANUFACTURER,

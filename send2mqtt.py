@@ -7,6 +7,8 @@ import mqttmessages as mm
 from const import (
     AMBER_DISCOVERY_TOPIC,
     AMBER_FORECAST_DISCOVERY_TOPIC,
+    AMBER_FORECAST_DEVICE,
+    AMBER_FORECAST_OBJECT,
     AEMO_DISCOVERY_TOPIC,
     AMBER_STATE_TOPIC_CURRENT,
     AMBER_STATE_TOPIC_PERIODS,
@@ -124,35 +126,22 @@ def PublishDiscoveryAmberEntities(client):
         print(f"Failed to send message to topic {AMBER_DISCOVERY_TOPIC}")
 
 def PublishDiscoveryAmberForecastEntities(client,forecast5,forecast30,forecastUser,forecast288):
-    """Publish the Amber Entities to Home Assistant"""
-    #topic = HOME_ASSISTANT_DISCOVERY_TOPIC
-    # for sensor in SENSOR_LIST:
+    """Publish all enabled Amber Forecast entities in a single discovery message"""
+    cmps = {}
     if forecast5:
-        discoveryMsg = mm.amberForecast5minDiscoveryMessage()  # sensor)
-        result = client.publish(
-            AMBER_FORECAST_DISCOVERY_TOPIC,
-            json.dumps(discoveryMsg), qos=0, retain=True)
-        status = result[0]
-        if status != 0:
-            print(f"Failed to send message to topic {AMBER_FORECAST_DISCOVERY_TOPIC}")
+        cmps.update(mm.amberForecast5minDiscoveryMessage()["cmps"])
     if forecast30:
-        discoveryMsg = mm.amberForecast30minDiscoveryMessage()
-        result = client.publish(
-            AMBER_FORECAST_DISCOVERY_TOPIC,
-            json.dumps(discoveryMsg), qos=0, retain=True)
-        status = result[0]
-        if status != 0:
-            print(f"Failed to send message to topic {AMBER_FORECAST_DISCOVERY_TOPIC}")
+        cmps.update(mm.amberForecast30minDiscoveryMessage()["cmps"])
     if forecastUser:
-        discoveryMsg = mm.amberForecastUserDiscoveryMessage()
-        result = client.publish(
-            AMBER_FORECAST_DISCOVERY_TOPIC,
-            json.dumps(discoveryMsg), qos=0, retain=True)
-        status = result[0]
-        if status != 0:
-            print(f"Failed to send message to topic {AMBER_FORECAST_DISCOVERY_TOPIC}")
+        cmps.update(mm.amberForecastUserDiscoveryMessage()["cmps"])
     if forecast288:
-        discoveryMsg = mm.amberForecast288DiscoveryMessage()
+        cmps.update(mm.amberForecast288DiscoveryMessage()["cmps"])
+    if cmps:
+        discoveryMsg = {
+            "device": AMBER_FORECAST_DEVICE,
+            "o": AMBER_FORECAST_OBJECT,
+            "cmps": cmps,
+        }
         result = client.publish(
             AMBER_FORECAST_DISCOVERY_TOPIC,
             json.dumps(discoveryMsg), qos=0, retain=True)
