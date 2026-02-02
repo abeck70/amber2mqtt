@@ -42,6 +42,7 @@ AMBER_5MIN_CURRENT_PERIOD_TIME_ENTITY = "Amber 5min Current Period Time"
 AMBER_5MIN_LAST_UPDATE = "Amber 5min Current Last Updated"
 AMBER_5MIN_CURRENT_GENERAL_DESCRIPTOR_ENTITY = "Amber 5min Current General Descriptor"
 AMBER_5MIN_CURRENT_FEED_IN_DESCRIPTOR_ENTITY = "Amber 5min Current Feed In Descriptor"
+AMBER_5MIN_CURRENT_DEMAND_WINDOW_ENTITY = "Amber 5min Current Demand Window"
 
 AMBER_5MIN_FORECASTS_GENERAL_ENTITY = "Amber 5min Forecasts General Price"
 AMBER_5MIN_FORECASTS_FEED_IN_ENTITY = "Amber 5min Forecasts Feed In Price"

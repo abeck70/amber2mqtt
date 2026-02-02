@@ -26,6 +26,7 @@ from const import (
     AMBER_5MIN_CURRENT_PERIOD_TIME_ENTITY,
     AMBER_5MIN_CURRENT_FEED_IN_DESCRIPTOR_ENTITY,
     AMBER_5MIN_CURRENT_GENERAL_DESCRIPTOR_ENTITY,
+    AMBER_5MIN_CURRENT_DEMAND_WINDOW_ENTITY,
     AMBER_5MIN_FORECASTS_GENERAL_ENTITY,
     AMBER_5MIN_FORECASTS_FEED_IN_ENTITY,
     AMBER_5MIN_FORECASTS_AEMO_ENTITY,
@@ -85,6 +86,7 @@ def amberDiscoveryMessage():
         AMBER_5MIN_CURRENT_PERIOD_TIME_ENTITY,
         AMBER_5MIN_CURRENT_FEED_IN_DESCRIPTOR_ENTITY,
         AMBER_5MIN_CURRENT_GENERAL_DESCRIPTOR_ENTITY,
+        AMBER_5MIN_CURRENT_DEMAND_WINDOW_ENTITY,
         AMBER_5MIN_LAST_UPDATE,
     ]
     
@@ -265,6 +267,9 @@ def amberStateMessage(amberdata):
             AMBER_5MIN_CURRENT_FEED_IN_DESCRIPTOR_ENTITY.lower().replace(
                 " ", "_"
             ): amberdata["current"]["feed_in"].descriptor if "feed_in" in amberdata["current"].keys() else None,
+            AMBER_5MIN_CURRENT_DEMAND_WINDOW_ENTITY.lower().replace(
+                " ", "_"
+            ): bool(amberdata["current"]["general"].tariff_information.demand_window) if amberdata["current"]["general"].tariff_information and amberdata["current"]["general"].tariff_information.demand_window is not None else False,
             AMBER_5MIN_LAST_UPDATE.lower().replace(" ", "_"): datetime.now().isoformat(),
         },
         "attributes": {
@@ -282,6 +287,7 @@ def amberStateMessage(amberdata):
             ),
             "renewables": amberdata["current"]["general"].renewables,
             "spike_status": amberdata["current"]["general"].spike_status,
+            "demand_window": bool(amberdata["current"]["general"].tariff_information.demand_window) if amberdata["current"]["general"].tariff_information and amberdata["current"]["general"].tariff_information.demand_window is not None else False,
             "update_time": datetime.now().isoformat(),
         },
     }
