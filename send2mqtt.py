@@ -2,6 +2,8 @@
 
 import json
 import os
+import socket
+import time
 from paho.mqtt import client as mqtt_client
 import mqttmessages as mm
 from const import (
@@ -62,7 +64,7 @@ if amber288Forecast:
     amber5minForecast = True
     amber30minForecast = True
 def mqttConnectBroker():
-    """Connect to the MQTT Broker"""
+    """Connect to the MQTT Broker, retrying indefinitely on DNS or connection failure."""
     def on_connect(client, userdata, flags, rc, properties=None):
         if rc == 0:
             print("Connected to MQTT Broker!")
@@ -108,12 +110,24 @@ def mqttConnectBroker():
     client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION2)
     if username not in (None, ""):
         client.username_pw_set(username, password)
-    # client.username_pw_set(username, password)
     client.on_connect = on_connect
     client.on_subscribe = on_subscribe
     client.on_message = on_message
-    client.connect(broker, port)
-    return client
+
+    delay = 5      # seconds between retries; doubles each attempt up to max_delay
+    max_delay = 60  # cap at 60 s to avoid very long gaps
+    attempt = 0
+
+    while True:
+        attempt += 1
+        try:
+            client.connect(broker, port)
+            print(f"MQTT connected to {broker}:{port} on attempt {attempt}")
+            return client
+        except (socket.gaierror, OSError, ConnectionRefusedError) as e:
+            print(f"MQTT connect attempt {attempt} failed ({e}). Retrying in {delay}s...")
+            time.sleep(delay)
+            delay = min(delay * 2, max_delay)
 
 
 def PublishDiscoveryAmberEntities(client):
